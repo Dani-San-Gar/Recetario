@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>App recetario diario</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f8f8;
+            padding: 20px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        #category {
+            padding: 10px;
+            font-size: 18px;
+            margin-bottom: 20px;
+            width: 200px;
+        }
+
+        .carousel {
+            position: relative;
+            width: 80%;
+            max-width: 500px;
+            margin: 20px auto;
+            text-align: center;
+        }
+
+        .carousel-item {
+            display: none;
+            font-size: 18px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .carousel-item.active {
+            display: block;
+        }
+
+        .carousel-button {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: #333;
+            color: #fff;
+            font-size: 24px;
+            padding: 10px;
+            border: none;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+
+        .carousel-button-left {
+            left: 10px;
+        }
+
+        .carousel-button-right {
+            right: 10px;
+        }
+
+        .buttons-container {
+            margin-top: 30px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 18px;
+            margin: 10px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #333;
+            color: #fff;
+        }
+
+        button:hover {
+            background-color: #555;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>App Recetario diario</h1>
+    
+    <select id="category" onchange="fetchRecipesByCategory()">
+        <option value="">Selecciona una categoria</option>
+    </select>
+
+    <div class="carousel">
+        <button class="carousel-button carousel-button-left" onclick="moveCarousel(-1)">&#10094;</button>
+        <div id="carousel-container"></div>
+        <button class="carousel-button carousel-button-right" onclick="moveCarousel(1)">&#10095;</button>
+    </div>
+
+    <div class="buttons-container">
+        <button onclick="fetchRandomRecipe()">Receta aleatoria</button>
+        <button onclick="sendRecipeByEmail()">Enviar receta</button>
+    </div>
+
+    <script>
+        let recipes = [];
+        let currentRecipeIndex = 0;
+
+        async function fetchCategories() {
+            const response = await fetch('https://www.themealdb.com/api/json/v1/1/list.php?c=list');
+            const data = await response.json();
+            const categories = data.meals;
+
+            const categoryDropdown = document.getElementById("category");
+            categories.forEach(category => {
+                const option = document.createElement('option');
+                option.textContent = category.strCategory;
+                option.value = category.strCategory;
+                categoryDropdown.appendChild(option);
+            });
+        }
+
+        async function fetchRecipesByCategory() {
+            const category = document.getElementById("category").value;
+            if (!category) return;
+
+            const response = await fetch(`https://www.themealdb.com/api/json/v1/1/filter.php?c=${category}`);
+            const data = await response.json();
+            recipes = data.meals || [];
+
+            if (recipes.length > 0) {
+                currentRecipeIndex = 0;
+                displayRecipe();
+            }
+        }
+
+        function displayRecipe() {
+            const carouselContainer = document.getElementById("carousel-container");
+            carouselContainer.innerHTML = '';
+            const recipe = recipes[currentRecipeIndex];
+            const item = document.createElement('div');
+            item.classList.add('carousel-item', 'active');
+            item.innerHTML = `
+                <img src="${recipe.strMealThumb}" alt="${recipe.strMeal}" style="width:100%">
+                <p>${recipe.strMeal}</p>
+            `;
+            carouselContainer.appendChild(item);
+        }
+
+        function moveCarousel(direction) {
+            currentRecipeIndex = (currentRecipeIndex + direction + recipes.length) % recipes.length;
+            displayRecipe();
+        }
+
+        async function fetchRandomRecipe() {
+            const response = await fetch('https://www.themealdb.com/api/json/v1/1/random.php');
+            const data = await response.json();
+            const randomRecipe = data.meals[0];
+            recipes = [randomRecipe];
+            currentRecipeIndex = 0;
+            displayRecipe();
+        }
+
+        function sendRecipeByEmail() {
+            const recipe = recipes[currentRecipeIndex];
+            const emailBody = encodeURIComponent(`Recipe: ${recipe.strMeal}\n\nInstructions: ${recipe.strInstructions}`);
+            window.location.href = `mailto:elcorreoquequieres@correo.com?subject=Recipe&body=${emailBody}`;
+        }
+
+        fetchCategories();
+    </script>
+</body>
+</html>
