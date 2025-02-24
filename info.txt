@@ -1,0 +1,5 @@
+he utilizado un archivo html basico, con su style y sus scripts dentro
+en el style he utilizado display: none y block para mostrar u ocultar
+los elementos. utilizo fetch para obtener los datos de la API, donde
+obtiene las categorias y las agrega al desplegable. luego carga las recetas.
+
